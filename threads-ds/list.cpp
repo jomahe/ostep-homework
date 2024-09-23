@@ -4,7 +4,6 @@
 
 List::List() {
   head = new ListNode();
-  head->next_ = nullptr;
   pthread_mutex_init(&head->lock_, NULL);
 }
 
@@ -42,7 +41,7 @@ void List::insert(int value) {
 }
 
 List::ListNode* List::lookup(int value) {
-  ListNode* found = nullptr;
+  ListNode* found = NULL;
 
   ListNode* curr = head;
   ListNode* next = head->next_;
