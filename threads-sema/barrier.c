@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <semaphore.h>
 
 #include "common_threads.h"
 
@@ -14,6 +15,10 @@
 
 typedef struct __barrier_t {
     // add semaphores and other information here
+    sem_t* mutex;
+    sem_t* turnstile;
+    int numArrived;
+    int threads;
 } barrier_t;
 
 
@@ -22,10 +27,29 @@ barrier_t b;
 
 void barrier_init(barrier_t *b, int num_threads) {
     // initialization code goes here
+    sem_init(&b->mutex, 0, 1);
+    sem_init(&b->turnstile, 0, 0);
+
+    b->numArrived = 0;
+    b->threads = num_threads;
 }
 
 void barrier(barrier_t *b) {
-    // barrier code goes here
+    // Acquire lock and wait for the num arrived to equal number of threads.
+    // Increment the numArrived param and relinquish the lock, wait for
+    // turnstile1 semaphore
+    sem_wait(&b->mutex);
+    b->numArrived++;
+    if (b->numArrived == b->threads) {
+        // When all threads have arrived after posting the before message,
+        // we can increment turnstile 1 to allow all threads to post the after
+        // message.
+        for (size_t i = 0; i < b->threads; i++) {
+            sem_post(&b->turnstile);
+        }
+    }
+    sem_post(&b->mutex);
+    sem_wait(&b->turnstile);
 }
 
 //
@@ -44,7 +68,7 @@ void *child(void *arg) {
 }
 
 
-// run with a single argument indicating the number of 
+// run with a single argument indicating the number of
 // threads you wish to create (1 or more)
 int main(int argc, char *argv[]) {
     assert(argc == 2);
@@ -56,14 +80,14 @@ int main(int argc, char *argv[]) {
 
     printf("parent: begin\n");
     barrier_init(&b, num_threads);
-    
+
     int i;
     for (i = 0; i < num_threads; i++) {
 	t[i].thread_id = i;
 	Pthread_create(&p[i], NULL, child, &t[i]);
     }
 
-    for (i = 0; i < num_threads; i++) 
+    for (i = 0; i < num_threads; i++)
 	Pthread_join(p[i], NULL);
 
     printf("parent: end\n");
