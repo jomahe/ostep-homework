@@ -5,7 +5,8 @@
     "iostream": "cpp",
     "iosfwd": "cpp",
     "common_threads.h": "c",
-    "semaphore.h": "c"
+    "semaphore.h": "c",
+    "functional": "cpp"
   },
   "terminal.integrated.fontFamily": "MesloLGS NF"
 }
